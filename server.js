@@ -18,6 +18,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/write', (req, res) => res.sendFile(path.join(__dirname, 'public', 'write.html')));
+app.get('/post/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'post.html')));
+app.get('/edit/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'write.html')));
+
 app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
