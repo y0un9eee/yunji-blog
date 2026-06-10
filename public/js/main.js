@@ -52,7 +52,7 @@ $(document).ready(function (){
 
     $('#nav-logout').on('click', async function (e) {
         e.preventDefault();
-        await API.post('/adpi/auth/logout', {});
+        await API.post('/api/auth/logout', {});
         window.location.href = '/';
     });
 });
