@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>글쓰기 - 윤지의 블로그</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo"><a href="/">윤지의 블로그</a></div>
+      <nav>
+        <span id="nav-username" style="display:none"></span>
+        <a href="/admin" id="nav-admin" style="display:none">관리자</a>
+        <a href="/write" class="btn btn-primary" id="nav-write" style="display:none">글쓰기</a>
+        <a href="/login" id="nav-login">로그인</a>
+        <a href="/register" class="btn btn-primary" id="nav-register">회원가입</a>
+        <a href="#" id="nav-logout" style="display:none">로그아웃</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="write-header">
+        <h1 class="page-title" id="page-title" style="margin-bottom: 0;">새 글 작성</h1>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" id="cancel-btn">취소</button>
+          <button class="btn btn-primary" id="submit-btn" form="write-form" type="submit">발행</button>
+        </div>
+      </div>
+
+      <div id="form-alert" style="display:none"></div>
+
+      <form id="write-form">
+        <input
+          type="text"
+          class="title-input"
+          id="title-input"
+          placeholder="제목을 입력하세요"
+          required
+        >
+
+        <div class="editor-wrapper">
+          <div class="editor-pane">
+            <div class="pane-label">마크다운 작성</div>
+            <textarea
+              id="content-input"
+              placeholder="마크다운으로 내용을 작성하세요...
+
+# 제목 1
+## 제목 2
+
+**굵은 글씨**, *기울임*, `코드`
+
+- 목록 항목
+- 목록 항목
+
+> 인용구
+
+```javascript
+// 코드 블록
+console.log('Hello!');
+```"
+            ></textarea>
+          </div>
+          <div class="preview-pane">
+            <div class="pane-label">미리보기</div>
+            <div class="preview-content post-body" id="preview-content">
+              <p style="color: var(--light-text); font-style: italic;">왼쪽에 내용을 입력하면 미리보기가 표시됩니다.</p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 윤지의 블로그. All rights reserved.</p>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/write.js"></script>
+</body>
+</html>

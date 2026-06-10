@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원가입 - 윤지의 블로그</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo"><a href="/">윤지의 블로그</a></div>
+      <nav>
+        <span id="nav-username" style="display:none"></span>
+        <a href="/admin" id="nav-admin" style="display:none">관리자</a>
+        <a href="/write" class="btn btn-primary" id="nav-write" style="display:none">글쓰기</a>
+        <a href="/login" id="nav-login">로그인</a>
+        <a href="/register" class="btn btn-primary" id="nav-register">회원가입</a>
+        <a href="#" id="nav-logout" style="display:none">로그아웃</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="form-container">
+        <div class="card">
+          <h1>회원가입</h1>
+          <div id="form-alert" style="display:none"></div>
+          <form id="register-form">
+            <div class="form-group">
+              <label for="username">사용자명</label>
+              <input type="text" id="username" placeholder="사용자명을 입력하세요" required>
+            </div>
+            <div class="form-group">
+              <label for="email">이메일</label>
+              <input type="email" id="email" placeholder="이메일을 입력하세요" required>
+            </div>
+            <div class="form-group">
+              <label for="password">비밀번호</label>
+              <input type="password" id="password" placeholder="6자 이상 입력하세요" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="submit-btn">가입하기</button>
+          </form>
+          <div class="form-footer">
+            이미 계정이 있으신가요? <a href="/login">로그인</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 윤지의 블로그. All rights reserved.</p>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#register-form').on('submit', async function (e) {
+        e.preventDefault();
+        hideAlert('#form-alert');
+        const $btn = $('#submit-btn');
+        $btn.prop('disabled', true).text('가입 중...');
+
+        try {
+          await API.post('/api/auth/register', {
+            username: $('#username').val(),
+            email: $('#email').val(),
+            password: $('#password').val(),
+          });
+          showAlert('#form-alert', '회원가입이 완료되었습니다! 로그인해주세요.', 'success');
+          setTimeout(() => window.location.href = '/login', 1500);
+        } catch (err) {
+          const msg = err.responseJSON?.error || '회원가입에 실패했습니다.';
+          showAlert('#form-alert', msg);
+          $btn.prop('disabled', false).text('가입하기');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

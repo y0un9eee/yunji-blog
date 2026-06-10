@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>윤지의 블로그</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo"><a href="/">윤지의 블로그</a></div>
+      <nav>
+        <span id="nav-username" style="display:none"></span>
+        <a href="/admin" id="nav-admin" style="display:none">관리자</a>
+        <a href="/write" class="btn btn-primary" id="nav-write" style="display:none">글쓰기</a>
+        <a href="/login" id="nav-login">로그인</a>
+        <a href="/register" class="btn btn-primary" id="nav-register">회원가입</a>
+        <a href="#" id="nav-logout" style="display:none">로그아웃</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container" id="post-container">
+      <div class="loading">불러오는 중...</div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 윤지의 블로그. All rights reserved.</p>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const postId = getPathId();
+
+    async function loadPost() {
+      try {
+        const post = await API.get(`/api/posts/${postId}`);
+        document.title = `${post.title} - 윤지의 블로그`;
+
+        const isAdmin = window.currentUser?.role === 'admin';
+        const adminActions = isAdmin ? `
+          <div class="post-actions">
+            <a href="/edit/${post.id}" class="btn btn-secondary btn-sm">수정</a>
+            <button class="btn btn-danger btn-sm" id="delete-btn">삭제</button>
+          </div>` : '';
+
+        const html = `
+          <div class="post-detail-header">
+            <a href="/" style="color: var(--light-text); text-decoration: none; font-size: 0.9rem;">← 목록으로</a>
+            <h1 style="margin-top: 16px;">${$('<div>').text(post.title).html()}</h1>
+            <div class="post-meta">
+              <span>✍️ ${post.author}</span>
+              <span>${formatDate(post.created_at)}</span>
+              ${post.updated_at !== post.created_at ? `<span>수정됨: ${formatDate(post.updated_at)}</span>` : ''}
+            </div>
+            ${adminActions}
+          </div>
+          <div class="post-body" id="post-body"></div>
+          <div class="comments-section" id="comments-section"></div>
+        `;
+
+        $('#post-container').html(html);
+        $('#post-body').html(DOMPurify.sanitize(marked.parse(post.content)));
+
+        if (isAdmin) {
+          $('#delete-btn').on('click', async function () {
+            if (!confirm('이 포스트를 삭제하시겠습니까?')) return;
+            $(this).prop('disabled', true).text('삭제 중...');
+            try {
+              await API.del(`/api/posts/${postId}`);
+              window.location.href = '/';
+            } catch {
+              alert('삭제에 실패했습니다.');
+              $(this).prop('disabled', false).text('삭제');
+            }
+          });
+        }
+
+        loadComments();
+      } catch {
+        $('#post-container').html('<div class="empty-state"><p>포스트를 찾을 수 없습니다.</p><a href="/" class="btn btn-primary">홈으로</a></div>');
+      }
+    }
+
+    async function loadComments() {
+      try {
+        const comments = await API.get(`/api/comments/${postId}`);
+        renderComments(comments);
+      } catch {
+        $('#comments-section').html('<p style="color: var(--light-text)">댓글을 불러오지 못했습니다.</p>');
+      }
+    }
+
+    function renderComments(comments) {
+      const user = window.currentUser;
+
+      const commentForm = user ? `
+        <div class="comment-form-box">
+          <div id="comment-alert" style="display:none"></div>
+          <textarea id="comment-input" placeholder="댓글을 입력하세요..."></textarea>
+          <button class="btn btn-primary btn-sm" id="comment-submit">댓글 작성</button>
+        </div>
+      ` : `
+        <div class="comment-login-notice">
+          댓글을 작성하려면 <a href="/login">로그인</a>이 필요합니다.
+        </div>
+      `;
+
+      const commentItems = comments.length
+        ? comments.map(c => renderComment(c)).join('')
+        : '<div class="loading" style="padding: 24px 0;">첫 번째 댓글을 남겨보세요!</div>';
+
+      $('#comments-section').html(`
+        <h2>댓글 ${comments.length > 0 ? `(${comments.length})` : ''}</h2>
+        ${commentForm}
+        <div class="comment-list" id="comment-list">${commentItems}</div>
+      `);
+
+      if (user) {
+        $('#comment-submit').on('click', submitComment);
+        $('#comment-input').on('keydown', function (e) {
+          if (e.ctrlKey && e.key === 'Enter') submitComment();
+        });
+      }
+    }
+
+    function renderComment(c) {
+      const user = window.currentUser;
+      const canDelete = user && (user.id === c.user_id || user.role === 'admin');
+      return `
+        <div class="comment-item" id="comment-${c.id}">
+          <div class="comment-header">
+            <span class="comment-author">${$('<div>').text(c.username).html()}</span>
+            <div class="comment-meta">
+              <span class="comment-date">${formatDate(c.created_at)}</span>
+              ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deleteComment(${c.id})">삭제</button>` : ''}
+            </div>
+          </div>
+          <div class="comment-content">${$('<div>').text(c.content).html()}</div>
+        </div>
+      `;
+    }
+
+    async function submitComment() {
+      const content = $('#comment-input').val().trim();
+      if (!content) {
+        showAlert('#comment-alert', '댓글 내용을 입력해주세요.');
+        return;
+      }
+      hideAlert('#comment-alert');
+      const $btn = $('#comment-submit');
+      $btn.prop('disabled', true).text('작성 중...');
+
+      try {
+        const comment = await API.post(`/api/comments/${postId}`, { content });
+        const noComments = $('#comment-list .loading');
+        if (noComments.length) noComments.remove();
+        $('#comment-list').append(renderComment(comment));
+        $('#comment-input').val('');
+        const countText = `댓글 (${$('.comment-item').length})`;
+        $('#comments-section h2').text(countText);
+      } catch (err) {
+        const msg = err.responseJSON?.error || '댓글 작성에 실패했습니다.';
+        showAlert('#comment-alert', msg);
+      } finally {
+        $btn.prop('disabled', false).text('댓글 작성');
+      }
+    }
+
+    window.deleteComment = async function (id) {
+      if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
+      try {
+        await API.del(`/api/comments/${id}`);
+        $(`#comment-${id}`).fadeOut(300, function () {
+          $(this).remove();
+          const count = $('.comment-item').length;
+          $('#comments-section h2').text(`댓글${count > 0 ? ` (${count})` : ''}`);
+        });
+      } catch {
+        alert('댓글 삭제에 실패했습니다.');
+      }
+    };
+
+    // 인증 상태 로드 후 포스트 렌더링
+    $(document).ready(async function () {
+      await updateNav();
+      await loadPost();
+    });
+  </script>
+</body>
+</html>
