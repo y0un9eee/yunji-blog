@@ -13,6 +13,10 @@ const API = {
     },
 };
 
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function showAlert(selector, message, type = 'error'){
     $(selector)
         .removeClass('alert-error alert-success')
